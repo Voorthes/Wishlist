@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Wishlist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .category-header {
+            background: linear-gradient(90deg, rgba(236,253,245,1) 0%, rgba(209,250,229,1) 100%);
+        }
+        .item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .purchased {
+            position: relative;
+        }
+        .purchased::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(209, 250, 229, 0.4);
+            z-index: 10;
+        }
+        .priority-high {
+            border-left: 4px solid #ef4444;
+        }
+        .priority-medium {
+            border-left: 4px solid #f59e0b;
+        }
+        .priority-low {
+            border-left: 4px solid #3b82f6;
+        }
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+        .quantity-btn {
+            background-color: #f3f4f6;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .quantity-input {
+            width: 2.5rem;
+            text-align: center;
+            border: none;
+            border-left: 1px solid #d1d5db;
+            border-right: 1px solid #d1d5db;
+            padding: 0.25rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-emerald-600 mb-2">Minha Wishlist</h1>
+            <p class="text-gray-600">Organize seus desejos e sonhos de consumo</p>
+        </header>
+
+        <!-- Add Item Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Adicionar Novo Item</h2>
+            <form id="addItemForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div>
+                    <label for="itemName" class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                    <input type="text" id="itemName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" required>
+                </div>
+                <div>
+                    <label for="itemPrice" class="block text-sm font-medium text-gray-700 mb-1">Valor Unitário (R$)</label>
+                    <input type="number" step="0.01" id="itemPrice" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" required>
+                </div>
+                <div>
+                    <label for="itemQuantity" class="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
+                    <div class="quantity-control">
+                        <button type="button" class="quantity-btn" onclick="decrementQuantity()">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number" id="itemQuantity" min="1" value="1" class="quantity-input">
+                        <button type="button" class="quantity-btn" onclick="incrementQuantity()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label for="itemCategory" class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                    <input type="text" id="itemCategory" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" required>
+                </div>
+                <div>
+                    <label for="itemSubcategory" class="block text-sm font-medium text-gray-700 mb-1">Subcategoria</label>
+                    <input type="text" id="itemSubcategory" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label for="itemLink" class="block text-sm font-medium text-gray-700 mb-1">Link</label>
+                    <input type="url" id="itemLink" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="itemImage" class="block text-sm font-medium text-gray-700 mb-1">URL da Imagem</label>
+                    <input type="url" id="itemImage" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label for="itemPriority" class="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
+                    <select id="itemPriority" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="low">Baixa</option>
+                        <option value="medium" selected>Média</option>
+                        <option value="high">Alta</option>
+                    </select>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="itemPurchased" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
+                    <label for="itemPurchased" class="ml-2 block text-sm text-gray-700">Já comprado?</label>
+                </div>
+                <div class="md:col-span-2 lg:col-span-3 flex items-end">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-plus-circle mr-2"></i> Adicionar Item
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Wishlist Display -->
+        <div id="wishlistContainer">
+            <!-- Categories will be added here dynamically -->
+        </div>
+
+        <!-- Stats and Actions -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Stats -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Estatísticas</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-emerald-50 p-4 rounded-lg">
+                        <p class="text-sm text-emerald-800 font-medium">Total de Itens</p>
+                        <p id="totalItems" class="text-2xl font-bold text-emerald-600">0</p>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="text-sm text-blue-800 font-medium">Itens Comprados</p>
+                        <p id="purchasedItems" class="text-2xl font-bold text-blue-600">0</p>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <p class="text-sm text-purple-800 font-medium">Valor Total</p>
+                        <p id="totalValue" class="text-2xl font-bold text-purple-600">R$ 0,00</p>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <p class="text-sm text-red-800 font-medium">Prioridade Alta</p>
+                        <p id="highPriorityItems" class="text-2xl font-bold text-red-600">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Ações</h2>
+                <div class="space-y-4">
+                    <button id="clearPurchasedBtn" onclick="clearPurchasedItems()" class="w-full bg-red-100 hover:bg-red-200 text-red-800 font-medium py-3 px-4 rounded-md transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-trash-alt mr-2"></i> Limpar Itens Comprados
+                    </button>
+                    <button id="exportBtn" onclick="exportWishlist()" class="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium py-3 px-4 rounded-md transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-file-export mr-2"></i> Exportar Wishlist
+                    </button>
+                    <button id="importBtn" onclick="importWishlist()" class="w-full bg-green-100 hover:bg-green-200 text-green-800 font-medium py-3 px-4 rounded-md transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-file-import mr-2"></i> Importar Wishlist
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data (will be replaced with localStorage data if available)
+        let wishlistItems = [];
+
+        // DOM elements
+        const addItemForm = document.getElementById('addItemForm');
+        const wishlistContainer = document.getElementById('wishlistContainer');
+        const totalItemsElement = document.getElementById('totalItems');
+        const purchasedItemsElement = document.getElementById('purchasedItems');
+        const totalValueElement = document.getElementById('totalValue');
+        const highPriorityItemsElement = document.getElementById('highPriorityItems');
+        const clearPurchasedBtn = document.getElementById('clearPurchasedBtn');
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            loadWishlistFromStorage();
+            renderWishlist();
+            updateStats();
+            updateClearPurchasedButton();
+        });
+
+        // Load wishlist from localStorage
+        function loadWishlistFromStorage() {
+            const savedWishlist = localStorage.getItem('wishlist');
+            if (savedWishlist) {
+                wishlistItems = JSON.parse(savedWishlist);
+            } else {
+                // If no saved data, use sample data
+                wishlistItems = [
+                    {
+                        id: 1,
+                        name: "Smartphone XYZ",
+                        price: 2499.99,
+                        quantity: 1,
+                        category: "Eletrônicos",
+                        subcategory: "Celulares",
+                        link: "https://exemplo.com/smartphone",
+                        image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80",
+                        purchased: false,
+                        priority: "high"
+                    },
+                    {
+                        id: 2,
+                        name: "Tênis Esportivo",
+                        price: 399.90,
+                        quantity: 2,
+                        category: "Vestuário",
+                        subcategory: "Calçados",
+                        link: "https://exemplo.com/tenis",
+                        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit-crop&w=500&q=80",
+                        purchased: true,
+                        priority: "medium"
+                    },
+                    {
+                        id: 3,
+                        name: "Livro de Programação",
+                        price: 89.90,
+                        quantity: 3,
+                        category: "Livros",
+                        subcategory: "Tecnologia",
+                        link: "https://exemplo.com/livro",
+                        image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80",
+                        purchased: false,
+                        priority: "low"
+                    }
+                ];
+                saveWishlistToStorage();
+            }
+        }
+
+        // Save wishlist to localStorage
+        function saveWishlistToStorage() {
+            localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
+        }
+
+        // Quantity controls
+        function incrementQuantity() {
+            const quantityInput = document.getElementById('itemQuantity');
+            quantityInput.value = parseInt(quantityInput.value) + 1;
+        }
+
+        function decrementQuantity() {
+            const quantityInput = document.getElementById('itemQuantity');
+            if (parseInt(quantityInput.value) > 1) {
+                quantityInput.value = parseInt(quantityInput.value) - 1;
+            }
+        }
+
+        // Form submission
+        addItemForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newItem = {
+                id: Date.now(),
+                name: document.getElementById('itemName').value,
+                price: parseFloat(document.getElementById('itemPrice').value),
+                quantity: parseInt(document.getElementById('itemQuantity').value),
+                category: document.getElementById('itemCategory').value,
+                subcategory: document.getElementById('itemSubcategory').value,
+                link: document.getElementById('itemLink').value,
+                image: document.getElementById('itemImage').value,
+                purchased: document.getElementById('itemPurchased').checked,
+                priority: document.getElementById('itemPriority').value
+            };
+            
+            wishlistItems.push(newItem);
+            saveWishlistToStorage();
+            addItemForm.reset();
+            document.getElementById('itemQuantity').value = 1; // Reset quantity to 1
+            renderWishlist();
+            updateStats();
+            updateClearPurchasedButton();
+            
+            // Show success message
+            alert('Item adicionado com sucesso!');
+        });
+
+        // Render the wishlist
+        function renderWishlist() {
+            // Group items by category
+            const categories = {};
+            wishlistItems.forEach(item => {
+                if (!categories[item.category]) {
+                    categories[item.category] = [];
+                }
+                categories[item.category].push(item);
+            });
+            
+            // Clear container
+            wishlistContainer.innerHTML = '';
+            
+            // Render each category
+            for (const category in categories) {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'mb-8 fade-in';
+                
+                // Calculate category total
+                const categoryTotal = categories[category].reduce((sum, item) => {
+                    return sum + (item.price * item.quantity);
+                }, 0);
+                
+                // Category header
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'category-header p-4 rounded-t-lg flex justify-between items-center';
+                headerDiv.innerHTML = `
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800">${category}</h3>
+                        <p class="text-sm text-gray-600">Total: R$ ${categoryTotal.toFixed(2).replace('.', ',')}</p>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="bg-emerald-100 text-emerald-800 text-sm font-medium px-3 py-1 rounded-full mr-2">
+                            ${categories[category].length} itens
+                        </span>
+                        <span class="bg-purple-100 text-purple-800 text-sm font-medium px-3 py-1 rounded-full">
+                            ${categories[category].filter(item => item.purchased).length} comprados
+                        </span>
+                    </div>
+                `;
+                
+                // Items grid
+                const itemsGrid = document.createElement('div');
+                itemsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-white p-4 rounded-b-lg shadow-sm';
+                
+                // Sort items by priority (high > medium > low)
+                categories[category].sort((a, b) => {
+                    const priorityOrder = { high: 3, medium: 2, low: 1 };
+                    return priorityOrder[b.priority] - priorityOrder[a.priority];
+                });
+                
+                // Add items to grid
+                categories[category].forEach(item => {
+                    const priorityClass = `priority-${item.priority}`;
+                    const priorityText = item.priority === 'high' ? 'Alta' : (item.priority === 'medium' ? 'Média' : 'Baixa');
+                    const priorityColor = item.priority === 'high' ? 'red' : (item.priority === 'medium' ? 'yellow' : 'blue');
+                    const totalPrice = item.price * item.quantity;
+                    
+                    const itemCard = document.createElement('div');
+                    itemCard.className = `item-card bg-white border border-gray-200 rounded-lg overflow-hidden transition duration-300 ${priorityClass} ${item.purchased ? 'purchased' : ''}`;
+                    
+                    itemCard.innerHTML = `
+                        <div class="relative">
+                            <img src="${item.image || 'https://via.placeholder.com/300x200?text=Sem+Imagem'}" alt="${item.name}" class="w-full h-48 object-cover">
+                            ${item.purchased ? `
+                                <div class="absolute top-2 right-2 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
+                                    <i class="fas fa-check mr-1"></i> Comprado
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="p-4">
+                            <h4 class="font-semibold text-lg mb-1 truncate">${item.name}</h4>
+                            <div class="flex justify-between items-center mb-2">
+                                <p class="text-emerald-600 font-bold text-xl">R$ ${totalPrice.toFixed(2).replace('.', ',')}</p>
+                                <div class="text-sm text-gray-500">
+                                    ${item.quantity > 1 ? `${item.quantity} × R$ ${item.price.toFixed(2).replace('.', ',')}` : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center mb-2">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-${priorityColor}-100 text-${priorityColor}-800">
+                                    <i class="fas ${item.priority === 'high' ? 'fa-exclamation-circle' : (item.priority === 'medium' ? 'fa-arrow-up' : 'fa-arrow-down')} mr-1"></i>
+                                    ${priorityText}
+                                </span>
+                                ${item.subcategory ? `<span class="ml-2 text-gray-500 text-sm"><i class="fas fa-tag mr-1"></i> ${item.subcategory}</span>` : ''}
+                            </div>
+                            
+                            <div class="flex justify-between items-center mt-4">
+                                ${item.link ? `
+                                    <a href="${item.link}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                        <i class="fas fa-external-link-alt mr-1"></i> Ver produto
+                                    </a>
+                                ` : '<div></div>'}
+                                
+                                <div class="flex space-x-2">
+                                    <div class="quantity-control">
+                                        <button onclick="updateQuantity(${item.id}, -1)" class="quantity-btn">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" id="quantity-${item.id}" min="1" value="${item.quantity}" class="quantity-input" onchange="updateQuantityInput(${item.id})">
+                                        <button onclick="updateQuantity(${item.id}, 1)" class="quantity-btn">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <button onclick="togglePurchased(${item.id})" class="text-gray-500 hover:text-emerald-600">
+                                        <i class="fas ${item.purchased ? 'fa-undo' : 'fa-check-circle'}"></i>
+                                    </button>
+                                    <button onclick="deleteItem(${item.id})" class="text-gray-500 hover:text-red-600">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    itemsGrid.appendChild(itemCard);
+                });
+                
+                categoryDiv.appendChild(headerDiv);
+                categoryDiv.appendChild(itemsGrid);
+                wishlistContainer.appendChild(categoryDiv);
+            }
+        }
+
+        // Update quantity via buttons
+        function updateQuantity(itemId, change) {
+            const itemIndex = wishlistItems.findIndex(item => item.id === itemId);
+            if (itemIndex !== -1) {
+                const newQuantity = wishlistItems[itemIndex].quantity + change;
+                if (newQuantity >= 1) {
+                    wishlistItems[itemIndex].quantity = newQuantity;
+                    document.getElementById(`quantity-${itemId}`).value = newQuantity;
+                    saveWishlistToStorage();
+                    renderWishlist();
+                    updateStats();
+                }
+            }
+        }
+
+        // Update quantity via input
+        function updateQuantityInput(itemId) {
+            const itemIndex = wishlistItems.findIndex(item => item.id === itemId);
+            if (itemIndex !== -1) {
+                const newQuantity = parseInt(document.getElementById(`quantity-${itemId}`).value);
+                if (!isNaN(newQuantity) && newQuantity >= 1) {
+                    wishlistItems[itemIndex].quantity = newQuantity;
+                    saveWishlistToStorage();
+                    renderWishlist();
+                    updateStats();
+                }
+            }
+        }
+
+        // Toggle purchased status
+        function togglePurchased(itemId) {
+            const itemIndex = wishlistItems.findIndex(item => item.id === itemId);
+            if (itemIndex !== -1) {
+                wishlistItems[itemIndex].purchased = !wishlistItems[itemIndex].purchased;
+                saveWishlistToStorage();
+                renderWishlist();
+                updateStats();
+                updateClearPurchasedButton();
+            }
+        }
+
+        // Delete item
+        function deleteItem(itemId) {
+            if (confirm('Tem certeza que deseja remover este item?')) {
+                wishlistItems = wishlistItems.filter(item => item.id !== itemId);
+                saveWishlistToStorage();
+                renderWishlist();
+                updateStats();
+                updateClearPurchasedButton();
+            }
+        }
+
+        // Clear all purchased items
+        function clearPurchasedItems() {
+            const purchasedCount = wishlistItems.filter(item => item.purchased).length;
+            
+            if (purchasedCount === 0) {
+                alert('Não há itens comprados para remover.');
+                return;
+            }
+            
+            if (confirm(`Tem certeza que deseja remover todos os ${purchasedCount} itens comprados?`)) {
+                wishlistItems = wishlistItems.filter(item => !item.purchased);
+                saveWishlistToStorage();
+                renderWishlist();
+                updateStats();
+                updateClearPurchasedButton();
+                alert('Itens comprados removidos com sucesso!');
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const totalItems = wishlistItems.reduce((sum, item) => sum + item.quantity, 0);
+            const purchasedItems = wishlistItems.filter(item => item.purchased).reduce((sum, item) => sum + item.quantity, 0);
+            const totalValue = wishlistItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const highPriorityItems = wishlistItems.filter(item => item.priority === 'high').reduce((sum, item) => sum + item.quantity, 0);
+            
+            totalItemsElement.textContent = totalItems;
+            purchasedItemsElement.textContent = purchasedItems;
+            totalValueElement.textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`;
+            highPriorityItemsElement.textContent = highPriorityItems;
+        }
+
+        // Update clear purchased button state
+        function updateClearPurchasedButton() {
+            const hasPurchasedItems = wishlistItems.some(item => item.purchased);
+            clearPurchasedBtn.disabled = !hasPurchasedItems;
+            
+            if (hasPurchasedItems) {
+                clearPurchasedBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                clearPurchasedBtn.classList.add('hover:bg-red-200');
+            } else {
+                clearPurchasedBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                clearPurchasedBtn.classList.remove('hover:bg-red-200');
+            }
+        }
+
+        // Export wishlist
+        function exportWishlist() {
+            if (wishlistItems.length === 0) {
+                alert('Não há itens na wishlist para exportar.');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(wishlistItems, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'wishlist.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        // Import wishlist
+        function importWishlist() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json';
+            
+            fileInput.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const importedItems = JSON.parse(event.target.result);
+                        
+                        if (!Array.isArray(importedItems)) {
+                            throw new Error('O arquivo não contém uma lista válida de itens.');
+                        }
+                        
+                        if (confirm(`Deseja importar ${importedItems.length} itens? Isso substituirá sua wishlist atual.`)) {
+                            wishlistItems = importedItems;
+                            saveWishlistToStorage();
+                            renderWishlist();
+                            updateStats();
+                            updateClearPurchasedButton();
+                            alert('Wishlist importada com sucesso!');
+                        }
+                    } catch (error) {
+                        alert('Erro ao importar wishlist: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            fileInput.click();
+        }
+    </script>
+</body>
+</html>
